@@ -1,0 +1,80 @@
+# 成片原素材反溯工具 —— 配置示例
+# 用法：python -m source_trace -q Final.mp4 -s Sources --config configs/default.yaml
+# 只需写需要覆盖的项，其余沿用 source_trace/config.py 中的默认值。
+
+sampling:
+  coarse_fps: 1.0        # 第一轮粗定位帧率
+  medium_fps: 2.0        # 粗定位不自信时的全片重扫帧率（<= coarse_fps 则关闭）
+  fine_fps: 4.0          # 候选区间精定位帧率
+  hard_fps: 8.0          # 困难样本帧率
+  fine_pad_sec: 1.5      # 精定位时向候选区间两侧扩展的秒数
+  frame_size: 512        # 送入 ISC 的分辨率（官方 checkpoint input_size=512）
+  rescan_max_source_sec: 1200.0   # 超过该时长的素材不做全片重扫
+
+shot:
+  method: auto           # auto / pyscenedetect / histogram / fixed
+  hist_threshold: 0.35   # 直方图阈值上限；实际阈值取稳健统计量
+  hist_z: 6.0
+  hist_min_abs: 0.12
+  hist_peak_ratio: 2.5
+  min_shot_sec: 0.6
+  max_shot_sec: 12.0
+
+feature:
+  model: isc21           # isc21 / colorhist（无 torch 时的纯 numpy 兜底）
+  device: auto           # auto / cuda / cpu
+  fp16: true
+  batch_size: 32
+  weights: ''            # 留空则自动在 models/ 下查找并尝试下载
+
+cache:
+  enabled: true
+  dir: cache
+  full_hash: false       # true = 全量 SHA256（更严格但更慢）
+
+retrieval:
+  top_k: 5
+  frame_top_n: 20
+  min_source_sim: 0.30
+
+alignment:
+  method: tn             # tn / dp / dtw / hv / none
+  min_sim: 0.35
+  adaptive_min_sim: true
+  adaptive_keep_mult: 5.0
+  tn_max_step: 10
+  tn_top_k: 5
+  min_length: 3
+  min_slope: 0.5         # 允许的最慢速度（0.5x）
+  max_slope: 2.0         # 允许的最快速度（2.0x）
+  min_segment_sec: 0.8
+
+confidence:
+  # 四项子分数的权重（会自动按总和归一化）
+  w_visual: 0.45
+  w_temporal: 0.25
+  w_margin: 0.15
+  w_alignment: 0.15
+  high: 0.80
+  medium: 0.65
+  low: 0.50
+  ambiguous_margin: 0.04   # 候选分差小于此值且置信度不高时判 UNKNOWN
+  enhance_threshold: 0.85  # 低于此值触发困难样本升级
+  length_ref_sec: 3.0
+
+refinement:
+  enabled: true
+  tta: false             # 困难样本时的多尺度 + 水平翻转
+  score_norm: false      # 背景样本分数归一化
+  crop_compensate: true  # 片段判成 UNKNOWN 时，把原素材中心裁切到相同视野再试
+  crop_views: [0.9, 0.8]
+  crop_candidates: 3
+  transvcl: false        # 可选依赖，见 docs/TRANSVCL.md
+
+export:
+  mode: auto             # auto/reencode = 精确重编码；copy = 关键帧对齐但最快
+  crf: 16
+  preset: slow
+  export_query_clips: true
+  contact_sheet: true
+  compare_video: true

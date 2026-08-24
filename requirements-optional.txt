@@ -1,0 +1,14 @@
+# ===== 可选依赖（缺失时主流程仍可运行）=====
+
+# 更快的向量检索（素材极多时）；缺失时自动退化为 numpy 矩阵乘法
+faiss-cpu>=1.7.4
+
+# 更稳健的镜头检测；缺失时自动退化为内置直方图/HSV 差分检测
+scenedetect>=0.6.2
+
+# TransVCL 困难样本判别（需要额外权重与 CUDA 环境）
+# 安装说明见 docs/TRANSVCL.md
+# transvcl
+
+# GUI（PySide6 或 tkinter 二选一，tkinter 为 Python 自带）
+PySide6>=6.5

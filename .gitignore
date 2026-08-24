@@ -1,0 +1,61 @@
+# ---- 大文件 / 二进制（GitHub 仓库只放代码，超过 1MB 的一律不上传）----
+# 模型权重（400MB，首次运行自动下载，见 README）
+models/
+*.pth
+*.pth.tar
+*.ckpt
+*.onnx
+
+# 项目内置的 ffmpeg（约 300MB，需自行下载，见 README）
+tools/
+
+# 合成测试数据与真实测试素材
+testdata/
+test_pic/
+
+# 运行产物
+output/
+cache/
+reports/runs/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.avi
+*.m4v
+*.flv
+*.ts
+*.npz
+*.jpg
+*.jpeg
+*.png
+
+# 日志
+*.log
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 工具目录 ----
+.comate/

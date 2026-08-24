@@ -1,0 +1,15 @@
+# ===== 成片原素材反溯工具 / Source Trace 基础依赖 =====
+# PyTorch 请单独安装（CUDA 版本需匹配本机驱动）：
+#   python -m pip install torch==2.6.0 torchvision==0.21.0
+# 国内可用清华源：
+#   python -m pip install torch==2.6.0 torchvision==0.21.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+numpy>=1.24
+scipy>=1.10
+opencv-python>=4.8
+Pillow>=10.0
+timm>=0.9.12
+tqdm>=4.65
+pandas>=2.0
+PyYAML>=6.0
+psutil>=5.9
