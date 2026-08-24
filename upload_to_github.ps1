@@ -154,9 +154,11 @@ Info "已提交：$Message"
 
 # ---------- 6. 推送 ----------
 Info "推送到 $Remote ($Branch) ..."
-$push = Invoke-Git push -u origin $Branch
-Write-Host $push.Out
+# -q：push 的进度/摘要走 stderr，PowerShell 5.1 会把它渲染成刺眼的错误块
+$push = Invoke-Git push -q -u origin $Branch
+if ($push.Std) { Write-Host $push.Std }
 if ($push.Code -ne 0) {
+    if ($push.Err) { Write-Host $push.Err -ForegroundColor Red }
     Warn "推送失败。常见原因:"
     Warn "  1) 没有登录凭据: 用 Personal Access Token 当密码，或先执行 gh auth login"
     Warn "  2) 远端已有提交且历史不同: 先执行 git pull --rebase origin $Branch 再重跑本脚本"
