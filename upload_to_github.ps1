@@ -29,11 +29,26 @@ function Info($m) { Write-Host "[INFO] $m" -ForegroundColor Cyan }
 function Warn($m) { Write-Host "[WARN] $m" -ForegroundColor Yellow }
 function Fail($m) { Write-Host "[FAIL] $m" -ForegroundColor Red; exit 1 }
 
-# 统一封装 git 调用：合并 stderr，返回 (输出, 退出码)
+# 统一封装 git 调用：把 stderr 写进临时文件而不是合并到管道，
+# 否则 PowerShell 5.1 会把 git 的正常提示（如 "* [new branch] main -> main"）
+# 变成刺眼的 NativeCommandError 错误记录。
 function Invoke-Git {
     param([Parameter(ValueFromRemainingArguments = $true)][string[]]$GitArgs)
-    $out = & git @GitArgs 2>&1 | Out-String
-    return [pscustomobject]@{ Out = $out.Trim(); Code = $LASTEXITCODE }
+    $errFile = [System.IO.Path]::GetTempFileName()
+    try {
+        $out = (& git @GitArgs 2> $errFile) | Out-String
+        $code = $LASTEXITCODE
+        $err = ""
+        if (Test-Path $errFile) { $err = (Get-Content -Raw -LiteralPath $errFile -ErrorAction SilentlyContinue) }
+        return [pscustomobject]@{
+            Out  = ($out + "`n" + $err).Trim()
+            Std  = $out.Trim()
+            Err  = ("" + $err).Trim()
+            Code = $code
+        }
+    } finally {
+        Remove-Item -LiteralPath $errFile -Force -ErrorAction SilentlyContinue
+    }
 }
 
 # ---------- 0. 环境检查 ----------
@@ -50,11 +65,17 @@ if (-not (Test-Path ".git")) {
     (Invoke-Git init -q) | Out-Null
     (Invoke-Git symbolic-ref HEAD "refs/heads/$Branch") | Out-Null
 } else {
-    $cur = (Invoke-Git rev-parse --abbrev-ref HEAD).Out
-    if ($cur -and $cur -ne $Branch -and $cur -ne "HEAD") {
-        Info "当前分支 $cur，切换到 $Branch"
-        $sw = Invoke-Git switch -c $Branch
-        if ($sw.Code -ne 0) { (Invoke-Git switch $Branch) | Out-Null }
+    # 空仓库（还没有任何提交）时 rev-parse HEAD 会失败，此时只需确保分支名正确
+    $hasCommit = (Invoke-Git rev-parse --verify -q HEAD).Code -eq 0
+    if (-not $hasCommit) {
+        (Invoke-Git symbolic-ref HEAD "refs/heads/$Branch") | Out-Null
+    } else {
+        $cur = (Invoke-Git rev-parse --abbrev-ref HEAD).Std
+        if ($cur -and $cur -ne $Branch) {
+            Info "当前分支 $cur，切换到 $Branch"
+            $sw = Invoke-Git switch -c $Branch
+            if ($sw.Code -ne 0) { (Invoke-Git switch $Branch) | Out-Null }
+        }
     }
 }
 
